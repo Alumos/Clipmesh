@@ -1,0 +1,9 @@
+.git
+.github
+.env
+.npm-cache
+backend/tmp
+frontend/node_modules
+frontend/dist
+**/*.test
+**/.DS_Store

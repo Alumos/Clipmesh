@@ -1,0 +1,10 @@
+{
+  "name": "Clipmesh 剪切板同步",
+  "short_name": "Clipmesh",
+  "description": "全平台私有部署剪切板同步",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#111111",
+  "lang": "zh-CN"
+}

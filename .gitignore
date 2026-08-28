@@ -1,0 +1,16 @@
+.env
+.npm-cache/
+.DS_Store
+Thumbs.db
+
+backend/clipmesh
+backend/tmp/
+
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/tsconfig.tsbuildinfo
+
+*.db
+*.db-shm
+*.db-wal
