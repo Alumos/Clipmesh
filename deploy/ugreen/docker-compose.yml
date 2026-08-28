@@ -1,0 +1,35 @@
+services:
+  clipmesh:
+    image: ghcr.io/alumos/clipmesh:0.2.2
+    container_name: clipmesh
+    restart: unless-stopped
+    ports:
+      - "7767:8080"
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      CLIPMESH_ADMIN_USERNAME: ${CLIPMESH_ADMIN_USERNAME:?请在同目录 .env 中设置 CLIPMESH_ADMIN_USERNAME}
+      CLIPMESH_ADMIN_PASSWORD: ${CLIPMESH_ADMIN_PASSWORD:?请在同目录 .env 中设置 CLIPMESH_ADMIN_PASSWORD}
+      CLIPMESH_COOKIE_SECURE: ${CLIPMESH_COOKIE_SECURE:-false}
+      CLIPMESH_SESSION_TTL: ${CLIPMESH_SESSION_TTL:-168h}
+      CLIPMESH_DATA_DIR: /data
+      CLIPMESH_TEXT_LIMIT: ${CLIPMESH_TEXT_LIMIT:-100}
+      CLIPMESH_FILE_TTL: ${CLIPMESH_FILE_TTL:-24h}
+      CLIPMESH_CLEANUP_INTERVAL: ${CLIPMESH_CLEANUP_INTERVAL:-1h}
+      CLIPMESH_MAX_UPLOAD_SIZE: ${CLIPMESH_MAX_UPLOAD_SIZE:-100MB}
+      CLIPMESH_CORS_ORIGINS: ${CLIPMESH_CORS_ORIGINS:-}
+    volumes:
+      - clipmesh_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  clipmesh_data:

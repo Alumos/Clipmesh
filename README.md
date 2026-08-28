@@ -43,6 +43,19 @@ docker compose up -d
 
 生产环境建议在 NAS 反向代理开启 HTTPS，将 `CLIPMESH_COOKIE_SECURE=true`，并只把服务暴露给需要的网络。浏览器读取/写回系统剪贴板也要求 HTTPS 或 localhost 安全上下文。
 
+### 绿联 NAS 成品配置
+
+仓库中的 `deploy/ugreen/` 已提供绿联 NAS 可直接使用的 Compose 配置，主机端口固定为 `7767`，容器内部端口为 `8080`。将该目录上传到 NAS 后执行：
+
+```bash
+cp .env.example .env
+# 编辑 .env，设置管理员账号和密码
+docker compose pull
+docker compose up -d
+```
+
+然后访问 `http://NAS-IP:7767`。生产环境建议通过绿联反向代理启用 HTTPS，并将 `.env` 中的 `CLIPMESH_COOKIE_SECURE` 改为 `true`。
+
 ## 配置
 
 | 环境变量 | 默认值 | 说明 |

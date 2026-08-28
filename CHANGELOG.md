@@ -13,6 +13,13 @@
 - 桌面常驻客户端：通过 GitHub Actions 构建 Windows、macOS 和 Linux 安装包。
 - 手机端分享扩展和系统剪贴板接入。
 
+## [0.2.2] - 2026-08-29
+
+### Added
+
+- 增加绿联 NAS 成品 Compose 配置，固定映射 `7767:8080`，并提供独立 `.env.example`。
+- NAS 配置默认锁定本次发布的 `ghcr.io/alumos/clipmesh:0.2.2` 镜像，限制日志大小并保留健康检查。
+
 ## [0.2.1] - 2026-08-29
 
 ### Changed
