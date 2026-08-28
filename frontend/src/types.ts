@@ -25,7 +25,6 @@ export interface AppConfig {
   textLimit: number
   fileTtlSeconds: number
   maxUploadBytes: number
-  authEnabled: boolean
   pageSize: number
 }
 
@@ -37,6 +36,7 @@ export interface ClipEvent {
 
 export interface DeviceProfile {
   label: string
+  kind: "desktop" | "mobile"
   device: string
   os: string
   browser: string

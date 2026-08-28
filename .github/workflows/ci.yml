@@ -19,10 +19,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.23.x"
+          go-version: "1.27.x"
           cache: true
           cache-dependency-path: backend/go.sum
       - run: go mod download
+      - run: go vet ./...
       - run: go test ./...
 
   frontend:
@@ -48,5 +49,3 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate compose file
         run: docker compose --env-file .env.example config --quiet
-      - name: Validate UGREEN NAS compose file
-        run: docker compose --env-file deploy/ugreen/.env.example -f deploy/ugreen/docker-compose.yml config --quiet

@@ -5,11 +5,11 @@ Clipmesh 是一套面向个人 NAS 的全平台 Web 剪贴板同步服务。电�
 ## 当前能力
 
 - 文本剪贴板：支持 `text/plain` 和可选的 `text/html`，每个账号按时间保留最近 N 条。
-- 文件剪贴板：单文件上传、下载，服务端按 TTL 自动清理临时文件。
+- 文件剪贴板：单文件上传、下载，图片在历史记录中显示紧凑缩略图并支持大图预览，服务端按 TTL 自动清理临时文件。
 - 多用户：管理员可在“用户与权限”页面创建普通用户或管理员；每个账号的文本、文件、搜索结果和 SSE 实时事件完全独立。
 - 安全登录：bcrypt 密码哈希、SQLite 持久化 Session、HttpOnly Cookie；健康检查接口保持匿名可访问。
 - 设备识别：前端使用成熟的 UAParser.js 读取设备型号、操作系统和浏览器，用户仍可手动设置易读设备名。
-- 响应式 UI：`components.json` + `src/components/ui` 本地 shadcn/ui 组件源码，配合 Radix UI Tabs/Label 原语；桌面端左侧快速同步、右侧最近剪贴板，手机端自动切换为单列；管理员使用统一的 `/admin/users` 页面。
+- 响应式 UI：`components.json` + `src/components/ui` 本地 shadcn/ui 组件源码，配合 Radix UI 原语；桌面端以历史剪贴板为主栏、快速同步为右侧栏，手机端打开后先显示历史记录；管理员使用统一的 `/admin/users` 页面。
 - 实时连接：SSE 事件带有递增序号，短时断线可通过 `Last-Event-ID` 补发；重连成功后前端会主动刷新列表，避免只依赖推送状态。
 - 发布与部署：Docker Compose、`linux/amd64` + `linux/arm64` 镜像、GitHub Actions CI / GHCR / Release。
 
@@ -42,19 +42,6 @@ docker compose up -d
 ```
 
 生产环境建议在 NAS 反向代理开启 HTTPS，将 `CLIPMESH_COOKIE_SECURE=true`，并只把服务暴露给需要的网络。浏览器读取/写回系统剪贴板也要求 HTTPS 或 localhost 安全上下文。
-
-### 绿联 NAS 成品配置
-
-仓库中的 `deploy/ugreen/` 已提供绿联 NAS 可直接使用的 Compose 配置，主机端口固定为 `7767`，容器内部端口为 `8080`。将该目录上传到 NAS 后执行：
-
-```bash
-cp .env.example .env
-# 编辑 .env，设置管理员账号和密码
-docker compose pull
-docker compose up -d
-```
-
-然后访问 `http://NAS-IP:7767`。生产环境建议通过绿联反向代理启用 HTTPS，并将 `.env` 中的 `CLIPMESH_COOKIE_SECURE` 改为 `true`。
 
 ## 配置
 

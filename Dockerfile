@@ -9,7 +9,7 @@ ARG VITE_API_BASE_URL=""
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build
 
-FROM golang:1.23-alpine AS api-builder
+FROM golang:1.27-alpine AS api-builder
 WORKDIR /src/backend
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download

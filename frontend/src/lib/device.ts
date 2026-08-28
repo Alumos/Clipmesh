@@ -15,10 +15,11 @@ export function getDeviceId() {
 export function detectDevice(): DeviceProfile {
   const result = new UAParser().getResult()
   const device = [result.device.vendor, result.device.model].filter(Boolean).join(" ")
+  const kind = result.device.type === "mobile" || result.device.type === "tablet" ? "mobile" : "desktop"
   const os = [result.os.name, result.os.version].filter(Boolean).join(" ") || "未知系统"
   const browser = [result.browser.name, result.browser.version?.split(".").slice(0, 2).join(".")].filter(Boolean).join(" ") || "浏览器"
   const label = device ? `${device} · ${os}` : `${os} · ${browser}`
-  return { label, device: device || "桌面设备", os, browser }
+  return { label, kind, device: device || "桌面设备", os, browser }
 }
 
 export function getDeviceName() {

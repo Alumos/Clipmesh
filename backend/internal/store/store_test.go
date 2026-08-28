@@ -16,13 +16,17 @@ func TestTextLimitKeepsNewestClips(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer clips.Close()
+	admin, err := clips.EnsureAdmin(context.Background(), "admin", "admin-password")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, value := range []string{"first", "second", "third"} {
-		if _, err := clips.CreateText(context.Background(), "device", "Test device", map[string]string{"text/plain": value}); err != nil {
+		if _, err := clips.CreateTextForUser(context.Background(), admin.ID, "device", "Test device", map[string]string{"text/plain": value}); err != nil {
 			t.Fatal(err)
 		}
 	}
-	items, err := clips.List(context.Background(), "", "text", 100)
+	items, err := clips.ListForUser(context.Background(), admin.ID, "", "text", 100)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -57,4 +57,11 @@
     background-image: linear-gradient(to right, hsl(var(--border) / 0.28) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--border) / 0.28) 1px, transparent 1px);
     background-size: 24px 24px;
   }
+
+  .clip-text-preview {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
 }
