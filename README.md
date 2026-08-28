@@ -32,7 +32,7 @@ docker compose pull
 docker compose up -d
 ```
 
-然后访问 `http://NAS-IP:8080`。首次启动会把 `.env` 中的管理员账号写入 SQLite；密码只保存为 bcrypt 哈希。数据库中已有同名管理员时，启动不会用环境变量覆盖其密码。
+然后访问 `http://NAS-IP:7767`。首次启动会把 `.env` 中的管理员账号写入 SQLite；密码只保存为 bcrypt 哈希。数据库中已有同名管理员时，启动不会用环境变量覆盖其密码。
 
 默认 Docker volume 包含：
 
@@ -52,7 +52,7 @@ docker compose up -d
 | `CLIPMESH_ADMIN_PASSWORD` | 无 | 首次启动管理员密码，必填；不会写入明文 |
 | `CLIPMESH_COOKIE_SECURE` | `false` | HTTPS 部署时设为 `true` |
 | `CLIPMESH_SESSION_TTL` | `168h` | 登录 Session 有效期 |
-| `CLIPMESH_PORT` | `8080` | NAS 主机映射端口 |
+| `CLIPMESH_PORT` | `7767` | NAS 主机映射端口；容器内部仍使用 8080 |
 | `CLIPMESH_TEXT_LIMIT` | `100` | 每个账号保留的文本条数 |
 | `CLIPMESH_FILE_TTL` | `24h` | 文件临时保留时间，例如 `12h` |
 | `CLIPMESH_CLEANUP_INTERVAL` | `1h` | 过期文件和 Session 扫描间隔 |

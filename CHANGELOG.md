@@ -4,10 +4,20 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Docker Compose 默认将 NAS 主机端口调整为 `7767`，容器内部端口保持 `8080`。
+
 ### Planned
 
 - 桌面常驻客户端：通过 GitHub Actions 构建 Windows、macOS 和 Linux 安装包。
 - 手机端分享扩展和系统剪贴板接入。
+
+## [0.2.1] - 2026-08-29
+
+### Changed
+
+- NAS Docker Compose 默认端口调整为 `7767:8080`，部署后访问 `http://NAS-IP:7767`。
 
 ## [0.2.0] - 2026-08-29
 
