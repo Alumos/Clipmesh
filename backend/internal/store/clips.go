@@ -56,7 +56,10 @@ func (s *Store) CreateTextForUser(ctx context.Context, userID, deviceID, deviceN
 	if _, err := tx.ExecContext(ctx, `
 		DELETE FROM clips
 		WHERE kind = 'text' AND user_id = ? AND id NOT IN (
-			SELECT id FROM clips WHERE kind = 'text' AND user_id = ? ORDER BY created_at DESC LIMIT ?
+			SELECT id FROM clips
+			WHERE kind = 'text' AND user_id = ?
+			ORDER BY created_at DESC, rowid DESC
+			LIMIT ?
 		)
 	`, userID, userID, s.textLimit); err != nil {
 		return model.Clip{}, fmt.Errorf("prune text clips: %w", err)
@@ -144,7 +147,7 @@ func (s *Store) ListForUser(ctx context.Context, userID, query, kind string, lim
 		statement += ` AND (preview LIKE ? OR name LIKE ? OR device_name LIKE ?)`
 		args = append(args, like, like, like)
 	}
-	statement += ` ORDER BY created_at DESC LIMIT ?`
+	statement += ` ORDER BY created_at DESC, rowid DESC LIMIT ?`
 	args = append(args, limit)
 	rows, err := s.db.QueryContext(ctx, statement, args...)
 	if err != nil {

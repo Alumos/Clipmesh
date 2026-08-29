@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { X } from "lucide-react"
 
 import { AdminPage } from "@/AdminPage"
@@ -9,6 +9,7 @@ import { DeviceSettings } from "@/components/clipboard/device-settings"
 import { QuickSyncPanel } from "@/components/clipboard/quick-sync-panel"
 import {
   ApiError,
+  createText,
   deleteClip,
   downloadFile,
   fetchClips,
@@ -16,11 +17,18 @@ import {
   fetchCurrentUser,
   login,
   logout,
+  uploadFile,
 } from "@/lib/api"
-import { clipPlainText } from "@/lib/clips"
+import {
+  captureFromTransfer,
+  shouldKeepNativeClipboard,
+  writeClipToClipboard,
+  writeClipToTransfer,
+  type ClipboardCapture,
+} from "@/lib/clipboard"
 import { detectDevice, getDeviceName, resetDeviceName, setDeviceName } from "@/lib/device"
 import { connectEvents } from "@/lib/events"
-import { cn } from "@/lib/utils"
+import { cn, formatBytes } from "@/lib/utils"
 import type { AppConfig, Clip, ClipEvent, User } from "@/types"
 
 type SessionStatus = "checking" | "authenticated" | "anonymous"
@@ -57,6 +65,15 @@ function App() {
   const [deviceName, setDeviceNameDraft] = useState(getDeviceName)
   const [view, setView] = useState<AppView>(viewFromLocation)
   const deviceProfile = useMemo(() => detectDevice(), [])
+  const syncingRef = useRef(false)
+
+  const showNotice = useCallback((message: string) => {
+    setError("")
+    setNotice(message)
+    window.setTimeout(() => {
+      setNotice((current) => current === message ? "" : current)
+    }, 2800)
+  }, [])
 
   const handleRequestError = useCallback((caught: unknown) => {
     if (caught instanceof ApiError && caught.status === 401) {
@@ -68,6 +85,29 @@ function App() {
     }
     setError(caught instanceof Error ? caught.message : "无法连接 Clipmesh")
   }, [])
+
+  const syncCapture = useCallback(async (capture: ClipboardCapture) => {
+    if (syncingRef.current) {
+      showNotice("上一条剪贴板正在同步")
+      return false
+    }
+
+    syncingRef.current = true
+    setError("")
+    try {
+      const created = capture.kind === "text"
+        ? await createText(capture.formats, deviceName)
+        : await uploadCaptureFile(capture.file, config.maxUploadBytes, deviceName)
+      setClips((current) => upsertClip(current, created))
+      showNotice(capture.kind === "text" ? "文本已同步到 Clipmesh" : "文件已上传并开始同步")
+      return true
+    } catch (caught) {
+      handleRequestError(caught)
+      return false
+    } finally {
+      syncingRef.current = false
+    }
+  }, [config.maxUploadBytes, deviceName, handleRequestError, showNotice])
 
   const initialize = useCallback(async () => {
     setLoading(true)
@@ -141,6 +181,36 @@ function App() {
     return () => source.close()
   }, [refreshClips, sessionStatus])
 
+  useEffect(() => {
+    if (sessionStatus !== "authenticated" || view !== "clipboard") return
+
+    const handlePaste = (event: ClipboardEvent) => {
+      if (shouldKeepNativeClipboard(event.target)) return
+      const capture = captureFromTransfer(event.clipboardData)
+      if (!capture) return
+      event.preventDefault()
+      void syncCapture(capture)
+    }
+
+    const handleCopyShortcut = (event: ClipboardEvent) => {
+      if (shouldKeepNativeClipboard(event.target)) return
+      const latestText = clips.find((clip) => clip.kind === "text")
+      if (!latestText || !writeClipToTransfer(event.clipboardData, latestText)) {
+        showNotice("暂无可复制的文本记录")
+        return
+      }
+      event.preventDefault()
+      showNotice("已复制最新文本到本机剪贴板")
+    }
+
+    window.addEventListener("paste", handlePaste)
+    window.addEventListener("copy", handleCopyShortcut)
+    return () => {
+      window.removeEventListener("paste", handlePaste)
+      window.removeEventListener("copy", handleCopyShortcut)
+    }
+  }, [clips, sessionStatus, showNotice, syncCapture, view])
+
   function navigate(nextView: AppView) {
     const nextPath = nextView === "users" ? "/admin/users" : "/"
     if (window.location.pathname !== nextPath) {
@@ -188,18 +258,7 @@ function App() {
     setCopyingId(clip.id)
     setError("")
     try {
-      const plain = clipPlainText(clip)
-      const rich = clip.formats?.["text/html"]
-      if (rich && navigator.clipboard.write && typeof ClipboardItem !== "undefined") {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "text/plain": new Blob([plain], { type: "text/plain" }),
-            "text/html": new Blob([rich], { type: "text/html" }),
-          }),
-        ])
-      } else {
-        await navigator.clipboard.writeText(plain)
-      }
+      await writeClipToClipboard(clip)
       showNotice("已复制到本机剪贴板")
     } catch {
       setError("复制失败，请确认当前页面处于 HTTPS 或 localhost 安全环境")
@@ -250,14 +309,6 @@ function App() {
   function restoreDeviceSettings() {
     setDeviceNameDraft(resetDeviceName())
     showNotice("已恢复 UA 自动识别名称")
-  }
-
-  function showNotice(message: string) {
-    setError("")
-    setNotice(message)
-    window.setTimeout(() => {
-      setNotice((current) => current === message ? "" : current)
-    }, 2800)
   }
 
   const adminView = view === "users" && currentUser?.role === "admin"
@@ -326,10 +377,7 @@ function App() {
             <aside id="quick-sync" className="scroll-mt-24 space-y-4 lg:sticky lg:top-24">
               <QuickSyncPanel
                 config={config}
-                clipCount={clips.length}
-                deviceName={deviceName}
-                onCreated={(clip) => setClips((current) => upsertClip(current, clip))}
-                onNotice={showNotice}
+                onSync={syncCapture}
                 onError={setError}
               />
               <DeviceSettings
@@ -353,6 +401,13 @@ function App() {
 
 function upsertClip(clips: Clip[], clip: Clip) {
   return [clip, ...clips.filter((item) => item.id !== clip.id)]
+}
+
+function uploadCaptureFile(file: File, maxUploadBytes: number, deviceName: string) {
+  if (file.size > maxUploadBytes) {
+    throw new Error(`文件不能超过 ${formatBytes(maxUploadBytes)}`)
+  }
+  return uploadFile(file, deviceName)
 }
 
 export default App

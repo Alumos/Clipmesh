@@ -6,12 +6,22 @@ Clipmesh 是一套面向个人 NAS 的全平台 Web 剪贴板同步服务。电�
 
 - 文本剪贴板：支持 `text/plain` 和可选的 `text/html`，每个账号按时间保留最近 N 条。
 - 文件剪贴板：单文件上传、下载，图片在历史记录中显示紧凑缩略图并支持大图预览，服务端按 TTL 自动清理临时文件。
+- 快捷键：页面处于前台且焦点不在编辑控件时，`Ctrl/Command + V` 直接同步本机文本、HTML、图片或文件，`Ctrl/Command + C` 复制服务端最新一条文本。
 - 多用户：管理员可在“用户与权限”页面创建普通用户或管理员；每个账号的文本、文件、搜索结果和 SSE 实时事件完全独立。
 - 安全登录：bcrypt 密码哈希、SQLite 持久化 Session、HttpOnly Cookie；健康检查接口保持匿名可访问。
 - 设备识别：前端使用成熟的 UAParser.js 读取设备型号、操作系统和浏览器，用户仍可手动设置易读设备名。
 - 响应式 UI：`components.json` + `src/components/ui` 本地 shadcn/ui 组件源码，配合 Radix UI 原语；桌面端以历史剪贴板为主栏、快速同步为右侧栏，手机端打开后先显示历史记录；管理员使用统一的 `/admin/users` 页面。
 - 实时连接：SSE 事件带有递增序号，短时断线可通过 `Last-Event-ID` 补发；重连成功后前端会主动刷新列表，避免只依赖推送状态。
 - 发布与部署：Docker Compose、`linux/amd64` + `linux/arm64` 镜像、GitHub Actions CI / GHCR / Release。
+
+## 快捷键
+
+| Windows / Linux | macOS | 行为 |
+| --- | --- | --- |
+| `Ctrl + V` | `Command + V` | 将本机剪贴板直接同步到当前账号 |
+| `Ctrl + C` | `Command + C` | 将最新一条服务端文本复制到本机剪贴板 |
+
+快捷键只在 Clipmesh 页面处于前台时生效。输入框、可编辑区域以及已经选中的页面文本保留浏览器原生复制粘贴行为；页面关闭或在后台时监听系统级快捷键需要后续桌面客户端支持。
 
 ## 技术结构
 
@@ -41,7 +51,7 @@ docker compose up -d
 /data/files/        文件剪贴板临时内容
 ```
 
-生产环境建议在 NAS 反向代理开启 HTTPS，将 `CLIPMESH_COOKIE_SECURE=true`，并只把服务暴露给需要的网络。浏览器读取/写回系统剪贴板也要求 HTTPS 或 localhost 安全上下文。
+生产环境建议在 NAS 反向代理开启 HTTPS，将 `CLIPMESH_COOKIE_SECURE=true`，并只把服务暴露给需要的网络。“读取并同步”按钮及历史记录写回系统剪贴板通常要求 HTTPS 或 localhost；用户主动触发的 `Ctrl/Command + C/V` 会优先使用浏览器原生复制粘贴事件。
 
 ## 配置
 
@@ -131,11 +141,11 @@ node scripts/api-smoke.mjs
 2. 推送代码和 tag，例如：
 
    ```bash
-   git tag v0.2.0
-   git push origin v0.2.0
+   git tag v0.4.0
+   git push origin v0.4.0
    ```
 
-3. GitHub Actions 会运行 Go/前端验证，构建并推送 `amd64`、`arm64` GHCR 镜像，再从对应版本段落创建 GitHub Release。
+3. main 分支 CI 会运行 Go、前端和 Compose 验证；tag 工作流确认该提交的 main CI 成功并校验版本元数据后，构建并推送 `amd64`、`arm64` GHCR 镜像，再从对应版本段落创建 GitHub Release。
 4. NAS 更新：
 
    ```bash
